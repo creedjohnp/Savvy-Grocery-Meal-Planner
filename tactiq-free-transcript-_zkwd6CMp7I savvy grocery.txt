@@ -1,0 +1,43 @@
+import openai
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# OpenAI API Key (Replace with your actual key)
+OPENAI_API_KEY = "your_api_key_here"
+
+def generate_meal_plan(grocery_items, dietary_pref, meals_per_day, household_size, budget):
+    prompt = f"""
+    You are an expert meal planner for seniors, creating nutritious, budget-friendly meals.
+    Based on the following inputs:
+    - Grocery Items: {grocery_items}
+    - Dietary Preferences: {dietary_pref}
+    - Meals Per Day: {meals_per_day}
+    - Household Size: {household_size}
+    - Budget: {budget}
+    Provide a meal plan, simple recipes, cost estimates, and ingredient substitutions.
+    """
+    
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "system", "content": "You are a helpful meal planner AI."},
+                  {"role": "user", "content": prompt}],
+        api_key=OPENAI_API_KEY
+    )
+    
+    return response["choices"][0]["message"]["content"]
+
+@app.route("/generate-meal-plan", methods=["POST"])
+def meal_plan():
+    data = request.json
+    grocery_items = data.get("grocery_items", "")
+    dietary_pref = data.get("dietary_pref", "")
+    meals_per_day = data.get("meals_per_day", 3)
+    household_size = data.get("household_size", 1)
+    budget = data.get("budget", "Not specified")
+    
+    meal_plan = generate_meal_plan(grocery_items, dietary_pref, meals_per_day, household_size, budget)
+    return jsonify({"meal_plan": meal_plan})
+
+if __name__ == "__main__":
+    app.run(debug=True)
